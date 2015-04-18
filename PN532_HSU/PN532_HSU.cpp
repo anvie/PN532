@@ -42,6 +42,7 @@ int8_t PN532_HSU::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     }
     while(_serial->available()){
         uint8_t ret = _serial->read();
+        delay(1);
         DMSG_HEX(ret);
     }
 
