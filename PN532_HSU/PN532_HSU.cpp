@@ -2,6 +2,12 @@
 #include "PN532_HSU.h"
 #include "PN532_debug.h"
 
+// #ifndef DEBUG
+//     #undef DMSG
+//     #undef DMSG_HEX
+//     #define DMSG(a) delay(1)
+//     #define DMSG_HEX(num)    delay(1)
+// #endif
 
 PN532_HSU::PN532_HSU(HardwareSerial &serial)
 {
@@ -14,13 +20,27 @@ void PN532_HSU::begin()
     _serial->begin(115200);
 }
 
+const unsigned char wake_up_command_bytes[24]={
+  0x55, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x03, 0xfd, 0xd4, \
+  0x14, 0x01, 0x17, 0x00};//wake up NFC module
+
 void PN532_HSU::wakeup()
 {
+    /*
     _serial->write(0x55);
     _serial->write(0x55);
     _serial->write(0);
     _serial->write(0);
     _serial->write(0);
+    */
+    
+    for (int i=0;i<24;i++){
+        _serial->write(wake_up_command_bytes[i]);
+    }
+    _serial->flush();
+    
+    delay(100);
 
     /** dump serial buffer */
     if(_serial->available()){
@@ -29,6 +49,7 @@ void PN532_HSU::wakeup()
     while(_serial->available()){
         uint8_t ret = _serial->read();
         DMSG_HEX(ret);
+        delay(1);
     }
 
 }
@@ -58,6 +79,7 @@ int8_t PN532_HSU::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     
     _serial->write(PN532_HOSTTOPN532);
     uint8_t sum = PN532_HOSTTOPN532;    // sum of TFI + DATA
+    
 
     DMSG("\nWrite: ");
     
@@ -75,9 +97,11 @@ int8_t PN532_HSU::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
         DMSG_HEX(body[i]);
     }
     
+    
     uint8_t checksum = ~sum + 1;            // checksum of TFI + DATA
     _serial->write(checksum);
     _serial->write(PN532_POSTAMBLE);
+    _serial->flush();
 
     return readAckFrame();
 }
@@ -196,6 +220,7 @@ int8_t PN532_HSU::receive(uint8_t *buf, int len, uint16_t timeout)
     }
     buf[read_bytes] = (uint8_t)ret;
     DMSG_HEX(ret);
+    delay(1);
     read_bytes++;
   }
   return read_bytes;

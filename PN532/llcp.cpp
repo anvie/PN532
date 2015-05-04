@@ -124,10 +124,14 @@ int8_t LLCP::connect(uint16_t timeout)
 
     // try to get a SYMM PDU
     if (2 > link.read(headerBuf, headerBufLen)) {
+        DMSG_STR(F("cannot read for getting SYMM PDU"));
         return -1;
     }
     type = getPType(headerBuf);
     if (PDU_SYMM != type) {
+        DMSG(F("bad return PDU type:"));
+        DMSG(type);
+        DMSG("\n");
         return -1;
     }
 
@@ -138,10 +142,12 @@ int8_t LLCP::connect(uint16_t timeout)
     body[0] = 0x06;
     body[1] = sizeof(body) - 2 - 1;
     if (!link.write(headerBuf, 2, body, sizeof(body) - 1)) {
+        DMSG_STR(F("cannot establish PDU connection"));
         return -2;
     }
 
     // wait for a CC PDU
+    
     DMSG("wait for a CC PDU\n");
     do {
         if (2 > link.read(headerBuf, headerBufLen)) {
@@ -149,17 +155,25 @@ int8_t LLCP::connect(uint16_t timeout)
         }
 
         type = getPType(headerBuf);
+        DMSG("type: ");
+        DMSG(type);
+        DMSG("\n");
         if (PDU_CC == type) {
             break;
         } else if (PDU_SYMM == type) {
             if (!link.write(SYMM_PDU, sizeof(SYMM_PDU))) {
+                DMSG_STR(F("cannot write SYMM_PDU"));
                 return -2;
             }
         } else {
+            DMSG(F("bad PDU response type: "));
+            DMSG(type);
+            DMSG("\n");
             return -3;
         }
 
     } while (1);
+    
 
     return 1;
 }

@@ -9,6 +9,8 @@ int8_t SNEP::write(const uint8_t *buf, uint8_t len, uint16_t timeout)
 		return -1;
 	}
 
+    delay(200);
+    
 	if (0 >= llcp.connect(timeout)) {
 		DMSG("failed to set up a connection\n");
 		return -2;
@@ -21,12 +23,14 @@ int8_t SNEP::write(const uint8_t *buf, uint8_t len, uint16_t timeout)
 	headerBuf[3] = 0;
 	headerBuf[4] = 0;
 	headerBuf[5] = len;
-	if (0 >= llcp.write(headerBuf, 6, buf, len)) {
+	if (!llcp.write(headerBuf, 6, buf, len)) {
+	    llcp.disconnect(timeout);
 		return -3;
 	}
-
+	
 	uint8_t rbuf[16];
 	if (6 > llcp.read(rbuf, sizeof(rbuf))) {
+	    llcp.disconnect(timeout);
 		return -4;
 	}
 
@@ -38,12 +42,14 @@ int8_t SNEP::write(const uint8_t *buf, uint8_t len, uint16_t timeout)
 		DMSG(rbuf[0]);
 		DMSG("\n");
 		// To-do: send Unsupported Version response
+		llcp.disconnect(timeout);
 		return -4;
 	}
 
 	// expect a put request
 	if (SNEP_RESPONSE_SUCCESS != rbuf[1]) {
 		DMSG("Expect a success response\n");
+		llcp.disconnect(timeout);
 		return -4;
 	}
 

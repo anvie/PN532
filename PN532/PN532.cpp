@@ -234,7 +234,7 @@ bool PN532::SAMConfig(void)
 {
     pn532_packetbuffer[0] = PN532_COMMAND_SAMCONFIGURATION;
     pn532_packetbuffer[1] = 0x01; // normal mode;
-    pn532_packetbuffer[2] = 0x14; // timeout 50ms * 20 = 1 second
+    pn532_packetbuffer[2] = 0xFF; //0x14; // timeout 50ms * 20 = 1 second
     pn532_packetbuffer[3] = 0x01; // use IRQ pin!
 
     DMSG("SAMConfig\n");
@@ -820,7 +820,9 @@ int16_t PN532::tgGetData(uint8_t *buf, uint8_t len)
 
 
     if (buf[0] != 0) {
-        DMSG("status is not ok\n");
+        DMSG(F("status is not ok: "));
+        DMSG(buf[0]);
+        DMSG(F("\n"));
         return -5;
     }
 

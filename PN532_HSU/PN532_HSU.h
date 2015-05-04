@@ -7,7 +7,7 @@
 
 #define PN532_HSU_DEBUG
 
-#define PN532_HSU_READ_TIMEOUT						(1000)
+#define PN532_HSU_READ_TIMEOUT						(5000)
 
 class PN532_HSU : public PN532Interface {
 public:
